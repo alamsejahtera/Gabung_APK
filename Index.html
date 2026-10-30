@@ -1,0 +1,774 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Terpadu LPG 3KG</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #1a237e; --bg: #f0f2f5; --border: #e0e0e0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #212121; }
+        
+        /* BUTTONS */
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 700; color: white; border: none; cursor: pointer; text-shadow: 1px 1px 2px rgba(0,0,0,0.4); box-shadow: 0 4px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3); transition: 0.2s; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .btn-blue { background: linear-gradient(to bottom, #2b88ff, #0056b3); border-bottom: 4px solid #003d80; }
+        .btn-green { background: linear-gradient(to bottom, #4caf50, #2e7d32); border-bottom: 4px solid #1b5e20; }
+        .btn-red { background: linear-gradient(to bottom, #f44336, #c62828); border-bottom: 4px solid #8e0000; }
+        .btn-orange { background: linear-gradient(to bottom, #ff9800, #e65100); border-bottom: 4px solid #b33c00; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; border-bottom-width: 2px; }
+
+        /* NAVBAR */
+        .navbar { background: #0f172a; display: flex; align-items: center; padding: 0 20px; height: 60px; color: white; position: sticky; top: 0; z-index: 1000; }
+        .nav-item { padding: 0 20px; height: 60px; display: flex; align-items: center; font-weight: 600; cursor: pointer; }
+        .nav-item:hover { background: #1e293b; }
+        .dropdown { position: relative; }
+        .dropdown-content { display: none; position: absolute; background: #1e293b; min-width: 250px; top: 60px; left: 0; box-shadow: 0 8px 16px rgba(0,0,0,0.2); z-index: 1000; }
+        .dropdown-content div { padding: 12px 16px; cursor: pointer; color: #e2e8f0; font-size: 14px; }
+        .dropdown-content div:hover { background: #334155; color: white; }
+        .dropdown:hover .dropdown-content { display: block; }
+
+        /* LAYOUT */
+        .main-content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+        .page { display: none; } .page.active { display: block; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 24px; margin-bottom: 24px; }
+        .card-title { font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+        
+        /* FORM & TABLE */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
+        .form-group input[readonly] { background: #f8fafc; font-weight: bold; color: #1e3a8a; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; }
+        th { background: #f8fafc; color: #334155; font-weight: 700; }
+        .total-row { background: #e0e7ff; font-weight: bold; }
+
+        .login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #0f172a, #1e3a8a); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: white; padding: 40px; border-radius: 16px; width: 400px; text-align: center; }
+        .login-logo { width: 80px; height: 80px; background: #1e3a8a; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; font-weight: bold; margin: 0 auto 20px; }
+        
+        .suggest { position: absolute; background: white; border: 1px solid #ccc; width: 100%; max-height: 150px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .suggest div { padding: 10px; cursor: pointer; }
+        .suggest div:hover { background: #e2e8f0; }
+        
+        /* TOAST */
+        .toast { position: fixed; top: 80px; right: 20px; background: #2e7d32; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; font-weight: bold; display: none; transition: opacity 0.3s; }
+    </style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginPage">
+    <div class="login-box">
+        <div class="login-logo" id="loginLogo">LP</div>
+        <div style="font-size:20px; font-weight:800; color:#1e3a8a; margin-bottom:5px;" id="loginCompanyName">PT. Nama Perusahaan</div>
+        <div style="font-size:13px; color:#64748b; margin-bottom:30px;">Sistem Terpadu LPG 3KG</div>
+        <input type="text" id="loginUser" placeholder="Username" style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:8px;">
+        <input type="password" id="loginPass" placeholder="Password" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #cbd5e1; border-radius:8px;">
+        <button class="btn btn-blue" style="width:100%;" onclick="doLogin()">MASUK</button>
+    </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none;">
+    <div class="navbar">
+        <div style="font-weight:800; font-size:18px; margin-right:30px;" id="headerCompanyName">PT. Nama Perusahaan</div>
+        <div class="nav-item" onclick="showPage('dashboard')">Dashboard</div>
+        
+        <div class="dropdown">
+            <div class="nav-item">Operasional ▾</div>
+            <div class="dropdown-content">
+                <div onclick="showPage('pageBuatSJ')">Jadwal Pengiriman - Buat SJ</div>
+                <div onclick="showPage('pageDaftarSJ')">Jadwal Pengiriman - Daftar & Cetak</div>
+                <div onclick="showPage('pageDaftarPengiriman')">Jadwal Pengiriman - Daftar Pengiriman</div>
+                <hr style="border-color:#334155; margin:5px 0;">
+                <div onclick="showPage('pageBuatKitir')">Kitir - Buat Kitir/Jadwal DO</div>
+                <div onclick="showPage('pageKitirBulanan')">Kitir - Kitir Bulanan</div>
+                <hr style="border-color:#334155; margin:5px 0;">
+                <div onclick="showPage('pageBuatPenebusan')">Penebusan - Buat Penebusan</div>
+                <div onclick="showPage('pageDaftarPenebusan')">Penebusan - Daftar Penebusan</div>
+                <div onclick="showPage('pageDistribusiPenebusan')">Penebusan - Distribusi Penebusan</div>
+            </div>
+        </div>
+        
+        <div class="dropdown">
+            <div class="nav-item">Pengaturan ▾</div>
+            <div class="dropdown-content">
+                <div onclick="showPage('pagePerusahaan')">Data Perusahaan</div>
+                <div onclick="showPage('pageMasterSPBE')">Master SPBE</div>
+                <div onclick="showPage('pageMasterBank')">Master Bank</div>
+                <div onclick="showPage('pageMasterPangkalan')">Master Pangkalan</div>
+                <div onclick="showPage('pageMasterSupir')">Master Pengemudi</div>
+                <div onclick="showPage('pageBackup')">Back Up Data</div>
+            </div>
+        </div>
+        
+        <div style="margin-left:auto;">
+            <button class="btn btn-red" style="padding:8px 16px; font-size:12px;" onclick="doLogout()">LOGOUT</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- DASHBOARD -->
+        <div class="page active" id="dashboard">
+            <div class="card">
+                <div class="card-title">Selamat Datang di Sistem Terpadu</div>
+                <p>Silakan pilih menu di atas untuk mulai bekerja.</p>
+            </div>
+        </div>
+
+        <!-- ================== OPERASIONAL ================== -->
+        <!-- BUAT SURAT JALAN -->
+        <div class="page" id="pageBuatSJ">
+            <div class="card">
+                <div class="card-title">Buat Surat Jalan (Terintegrasi DO)</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Tanggal</label><input type="date" id="sj_tanggal" onchange="onSJDateChange()"></div>
+                    <div class="form-group"><label>No. SJ</label><input type="text" id="sj_noSJ" readonly></div>
+                    <div class="form-group"><label>Kode Tebus (DO)</label><select id="sj_kodeTebus" onchange="onSJTebusChange()"><option value="">-- Pilih DO --</option></select></div>
+                    <div class="form-group"><label>No. SA</label><input type="text" id="sj_noSA" readonly></div>
+                    <div class="form-group"><label>SPBE</label><input type="text" id="sj_spbe" readonly></div>
+                    <div class="form-group"><label>Pengemudi</label><select id="sj_supir"><option value="">-- Pilih --</option></select></div>
+                </div>
+                <div style="background:#f8fafc; padding:15px; border-radius:8px; margin-bottom:20px; border:1px dashed #cbd5e1;">
+                    <div style="display:flex; gap:10px; align-items:flex-end;">
+                        <div class="form-group" style="flex:1; position:relative;"><label>Cari Pangkalan</label>
+                            <input type="text" id="sj_cariPangkalan" placeholder="Ketik nama pangkalan..." oninput="suggestPangkalan()" autocomplete="off">
+                            <div id="suggestPangkalanBox" class="suggest"></div>
+                        </div>
+                        <div class="form-group" style="width:120px;"><label>Jml Tabung</label><input type="number" id="sj_jmlTabung" value="100"></div>
+                        <button class="btn btn-green" style="padding:10px 20px;" onclick="tambahTujuanSJ()">+ Tambah</button>
+                    </div>
+                </div>
+                <table>
+                    <thead><tr><th>No</th><th>Pangkalan</th><th>Alamat</th><th>Jumlah</th><th>Total</th><th>Aksi</th></tr></thead>
+                    <tbody id="tabelTujuanSJ"></tbody>
+                    <tfoot><tr class="total-row"><td colspan="3" style="text-align:right;">TOTAL</td><td id="totalTabungSJ">0</td><td id="totalBayarSJ">Rp 0</td><td></td></tr></tfoot>
+                </table>
+                <button class="btn btn-blue" style="width:100%; margin-top:20px;" onclick="simpanSJ()">SIMPAN SURAT JALAN</button>
+            </div>
+        </div>
+
+        <!-- DAFTAR SURAT JALAN -->
+        <div class="page" id="pageDaftarSJ">
+            <div class="card">
+                <div class="card-title">Daftar & Cetak Surat Jalan</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Dari Tanggal</label><input type="date" id="dsj_tgl1"></div>
+                    <div class="form-group"><label>Sampai Tanggal</label><input type="date" id="dsj_tgl2"></div>
+                    <button class="btn btn-blue" onclick="cariDaftarSJ()">Cari</button>
+                </div>
+                <table>
+                    <thead><tr><th>Tanggal</th><th>No SJ</th><th>SPBE</th><th>Supir</th><th>Total Tabung</th><th>Status</th><th>Aksi</th></tr></thead>
+                    <tbody id="tabelDaftarSJ"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- DAFTAR PENGIRIMAN -->
+        <div class="page" id="pageDaftarPengiriman">
+            <div class="card">
+                <div class="card-title">Daftar Pengiriman Matriks</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Dari Tanggal</label><input type="date" id="dp_tgl1"></div>
+                    <div class="form-group"><label>Sampai Tanggal</label><input type="date" id="dp_tgl2"></div>
+                    <button class="btn btn-blue" onclick="cariMatriksPengiriman()">Tampilkan</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="matrix-table" id="tabelMatriksPengiriman" style="font-size:11px;">
+                        <thead id="headMatriks"></thead>
+                        <tbody id="bodyMatriks"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- BUAT KITIR -->
+        <div class="page" id="pageBuatKitir">
+            <div class="card">
+                <div class="card-title">Buat Kitir / Jadwal DO</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Kode Kitir</label><input type="text" id="k_kode" readonly></div>
+                    <div class="form-group"><label>Nomor SA</label><input type="text" id="k_sa"></div>
+                    <div class="form-group"><label>SPBE</label><select id="k_spbe"></select></div>
+                    <div class="form-group"><label>Jenis SA</label><select id="k_jenis"><option>REGULER</option><option>FAKULTATIF</option></select></div>
+                </div>
+                <button class="btn btn-orange" onclick="generateKodeKitir()">Generate Kode Kitir</button>
+                
+                <div style="margin-top:20px; background:#fffbeb; padding:15px; border-radius:8px; border:1px dashed #fcd34d;">
+                    <div style="display:flex; gap:10px; align-items:flex-end;">
+                        <div class="form-group" style="flex:1;"><label>Tanggal DO</label><input type="date" id="k_tgl"></div>
+                        <div class="form-group" style="flex:1;"><label>Jumlah (Tabung)</label><input type="number" id="k_jml"></div>
+                        <button class="btn btn-green" onclick="tambahJadwalKitir()">+ Rekam</button>
+                    </div>
+                </div>
+                <table>
+                    <thead><tr><th>No</th><th>Tanggal</th><th>Hari</th><th>Jumlah</th><th>Aksi</th></tr></thead>
+                    <tbody id="tabelJadwalKitir"></tbody>
+                    <tfoot><tr class="total-row"><td colspan="3" style="text-align:right;">TOTAL</td><td id="totalKitir">0</td><td></td></tr></tfoot>
+                </table>
+                <button class="btn btn-blue" style="width:100%; margin-top:20px;" onclick="simpanKitir()">SIMPAN KITIR</button>
+            </div>
+        </div>
+
+        <!-- KITIR BULANAN -->
+        <div class="page" id="pageKitirBulanan">
+            <div class="card">
+                <div class="card-title">Daftar Kitir Bulanan (Matriks)</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Bulan</label><select id="kb_bulan"><option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select></div>
+                    <div class="form-group"><label>Tahun</label><input type="number" id="kb_tahun"></div>
+                    <button class="btn btn-blue" onclick="cariKitirBulanan()">Tampilkan</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="matrix-table" id="tabelKitirBulanan" style="font-size:11px;">
+                        <thead id="headKitirBulanan"></thead>
+                        <tbody id="bodyKitirBulanan"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- BUAT PENEBUSAN -->
+        <div class="page" id="pageBuatPenebusan">
+            <div class="card">
+                <div class="card-title">Buat Penebusan DO</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Tanggal Penebusan</label><input type="date" id="t_tgl"></div>
+                    <div class="form-group"><label>Pilih Kitir</label><select id="t_kitir" onchange="onKitirTebusChange()"></select></div>
+                    <div class="form-group"><label>No. SA</label><input type="text" id="t_sa" readonly></div>
+                    <div class="form-group"><label>SPBE</label><input type="text" id="t_spbe" readonly></div>
+                    <div class="form-group"><label>No Bukti Bank</label><input type="text" id="t_nobukti"></div>
+                    <div class="form-group"><label>Rek. Bank</label><select id="t_bank"></select></div>
+                    <div class="form-group"><label>Dari Tanggal DO</label><input type="date" id="t_from"></div>
+                    <div class="form-group"><label>Sampai Tanggal DO</label><input type="date" id="t_to"></div>
+                    <div class="form-group"><label>Jumlah Unit</label><input type="number" id="t_unit" oninput="hitungTebus()"></div>
+                    <div class="form-group"><label>Harga Beli</label><input type="number" id="t_harga" oninput="hitungTebus()"></div>
+                    <div class="form-group"><label>Jumlah Setor</label><input type="number" id="t_setor"></div>
+                </div>
+                <button class="btn btn-blue" style="width:100%; margin-top:20px;" onclick="simpanPenebusan()">SIMPAN PENEBUSAN</button>
+            </div>
+        </div>
+
+        <!-- DAFTAR PENEBUSAN -->
+        <div class="page" id="pageDaftarPenebusan">
+            <div class="card">
+                <div class="card-title">Daftar Penebusan</div>
+                <table>
+                    <thead><tr><th>Kode Tebus</th><th>Tanggal</th><th>No SA</th><th>SPBE</th><th>Jumlah Unit</th><th>Jumlah Setor</th><th>Aksi</th></tr></thead>
+                    <tbody id="tabelDaftarPenebusan"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- DISTRIBUSI PENEBUSAN -->
+        <div class="page" id="pageDistribusiPenebusan">
+            <div class="card">
+                <div class="card-title">Distribusi Penebusan (SJ Terbentuk)</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Dari Tanggal</label><input type="date" id="dist_tgl1"></div>
+                    <div class="form-group"><label>Sampai Tanggal</label><input type="date" id="dist_tgl2"></div>
+                    <button class="btn btn-blue" onclick="cariDistribusi()">Cari Data</button>
+                </div>
+                <table>
+                    <thead><tr><th>No</th><th>Nomor SJ</th><th>Tanggal</th><th>Kode Tebus</th><th>Pengemudi</th><th>Jml.Pkl</th><th>Jml.Kirim</th><th>Jml.Nominal</th></tr></thead>
+                    <tbody id="tabelDistribusi"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ================== PENGATURAN / MASTER ================== -->
+        <!-- DATA PERUSAHAAN -->
+        <div class="page" id="pagePerusahaan">
+            <div class="card">
+                <div class="card-title">Data Perusahaan</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Nama Perusahaan</label><input type="text" id="pt_nama"></div>
+                    <div class="form-group"><label>Alamat</label><input type="text" id="pt_alamat"></div>
+                    <div class="form-group"><label>Kota</label><input type="text" id="pt_kota"></div>
+                    <div class="form-group"><label>Telepon</label><input type="text" id="pt_telp"></div>
+                    <div class="form-group"><label>Email</label><input type="text" id="pt_email"></div>
+                    <div class="form-group"><label>NPWP</label><input type="text" id="pt_npwp"></div>
+                    <div class="form-group"><label>Sold To</label><input type="text" id="pt_soldto"></div>
+                </div>
+                <button class="btn btn-green" onclick="simpanPerusahaan()">SIMPAN PERUSAHAAN</button>
+            </div>
+        </div>
+
+        <!-- MASTER SPBE -->
+        <div class="page" id="pageMasterSPBE">
+            <div class="card">
+                <div class="card-title">Master SPBE</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Kode SPBE</label><input type="text" id="sp_kode"></div>
+                    <div class="form-group"><label>Nama SPBE</label><input type="text" id="sp_nama"></div>
+                    <div class="form-group"><label>Alamat</label><input type="text" id="sp_alamat"></div>
+                    <div class="form-group"><label>Telepon</label><input type="text" id="sp_telp"></div>
+                    <div class="form-group"><label>Harga Beli</label><input type="number" id="sp_harga"></div>
+                    <div class="form-group"><label>Ship To</label><input type="text" id="sp_ship"></div>
+                </div>
+                <button class="btn btn-green" onclick="simpanSPBE()">SIMPAN SPBE</button>
+                <table style="margin-top:20px;">
+                    <thead><tr><th>Kode</th><th>Nama</th><th>Alamat</th><th>Harga</th><th>Aksi</th></tr></thead>
+                    <tbody id="tabelMasterSPBE"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MASTER BANK -->
+        <div class="page" id="pageMasterBank">
+            <div class="card">
+                <div class="card-title">Master Bank</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Nama Bank</label><input type="text" id="bk_nama"></div>
+                    <div class="form-group"><label>No Rekening</label><input type="text" id="bk_rek"></div>
+                    <div class="form-group"><label>Atas Nama</label><input type="text" id="bk_an"></div>
+                    <div class="form-group"><label>Cabang</label><input type="text" id="bk_cabang"></div>
+                </div>
+                <button class="btn btn-green" onclick="simpanBank()">SIMPAN BANK</button>
+                <table style="margin-top:20px;">
+                    <thead><tr><th>Nama</th><th>Rekening</th><th>Atas Nama</th><th>Aksi</th></tr></thead>
+                    <tbody id="tabelMasterBank"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MASTER PANGKALAN -->
+        <div class="page" id="pageMasterPangkalan">
+            <div class="card">
+                <div class="card-title">Master Pangkalan</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Kode</label><input type="text" id="mp_kode"></div>
+                    <div class="form-group"><label>Nama Pangkalan</label><input type="text" id="mp_nama"></div>
+                    <div class="form-group"><label>Alamat</label><input type="text" id="mp_alamat"></div>
+                    <div class="form-group"><label>Kuota</label><input type="number" id="mp_kuota"></div>
+                    <div class="form-group"><label>Harga</label><input type="number" id="mp_harga"></div>
+                    <div class="form-group"><label>Status</label><select id="mp_status"><option>AKTIF</option><option>NONAKTIF</option></select></div>
+                </div>
+                <button class="btn btn-green" onclick="simpanPangkalan()">SIMPAN PANGKALAN</button>
+                <table style="margin-top:20px;">
+                    <thead><tr><th>Kode</th><th>Nama</th><th>Alamat</th><th>Kuota</th><th>Harga</th><th>Status</th><th>Aksi</th></tr></thead>
+                    <tbody id="tabelMasterPangkalan"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MASTER PENGEMUDI -->
+        <div class="page" id="pageMasterSupir">
+            <div class="card">
+                <div class="card-title">Master Pengemudi</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>ID Supir</label><input type="text" id="ms_id"></div>
+                    <div class="form-group"><label>Nama Supir</label><input type="text" id="ms_nama"></div>
+                    <div class="form-group"><label>Nomor Polisi</label><input type="text" id="ms_armada"></div>
+                    <div class="form-group"><label>Nama Kernet</label><input type="text" id="ms_kernet"></div>
+                </div>
+                <button class="btn btn-green" onclick="simpanSupir()">SIMPAN PENGEMUDI</button>
+                <table style="margin-top:20px;">
+                    <thead><tr><th>ID</th><th>Nama</th><th>No Polisi</th><th>Kernet</th><th>Aksi</th></tr></thead>
+                    <tbody id="tabelMasterSupir"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BACKUP DATA -->
+        <div class="page" id="pageBackup">
+            <div class="card">
+                <div class="card-title">💾 Back Up Data Aplikasi</div>
+                <p style="margin-bottom: 20px; font-size: 14px; color: #555;">
+                    Fitur ini akan mengunduh data transaksi (Surat Jalan, SPP, Master Data) sesuai rentang tanggal yang dipilih. File akan diunduh dalam format Excel (untuk diolah) dan PDF (untuk dicetak/dibagikan).
+                </p>
+                
+                <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 600px;">
+                    <div class="form-group">
+                        <label>Dari Tanggal <span style="color:red">*</span></label>
+                        <input type="date" id="backup_tgl_mulai" style="padding:10px; border:2px solid #ccc; border-radius:8px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Sampai Tanggal <span style="color:red">*</span></label>
+                        <input type="date" id="backup_tgl_selesai" style="padding:10px; border:2px solid #ccc; border-radius:8px;">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 10px; margin-bottom: 30px;">
+                    <button class="btn btn-blue" onclick="prosesBackup('excel')"> ⬇ Download Excel (Multi-Sheet)</button>
+                    <button class="btn btn-red" onclick="prosesBackup('pdf')"> 🖨 Download PDF (Ringkasan)</button>
+                </div>
+
+                <div id="backupStatus" style="display:none; margin-bottom:20px; padding:16px; background:#e3f2fd; color:var(--primary); border-radius:8px; font-weight:bold; text-align:center;">
+                    Memproses file... Mohon tunggu.
+                </div>
+                <div id="backupSuccessMsg"></div>
+
+                <!-- BAGIAN HAPUS DATA LAMA -->
+                <div style="margin-top: 30px; padding: 20px; background: #ffebee; border: 2px solid #ef9a9a; border-radius: 10px;">
+                    <h3 style="color: #c62828; font-size: 16px; margin-bottom: 10px;">⚠️ Bersihkan Data Transaksi Lama</h3>
+                    <p style="font-size: 13px; color: #b71c1c; margin-bottom: 15px;">
+                        Gunakan fitur ini <b>hanya jika Anda sudah mengunduh Backup Excel</b>. Fitur ini akan menghapus permanen data Kitir & Penebusan sebelum tanggal yang ditentukan untuk mempercepat kinerja aplikasi. <b>Master Data (SPBE, Bank, Perusahaan) tidak akan terhapus.</b>
+                    </p>
+                    
+                    <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label style="color: #b71c1c;">Hapus Data Sebelum Tanggal:</label>
+                            <input type="date" id="hapus_tgl_batas" style="padding:10px; border:2px solid #ef9a9a; border-radius:8px; font-weight:bold;">
+                        </div>
+                        <button onclick="konfirmasiHapusData(this)" class="btn btn-red" style="padding:11px 20px;">
+                            🗑 Hapus Data Lama
+                        </button>
+                    </div>
+                    
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: bold; color: #b71c1c;">
+                        <input type="checkbox" id="cb_backup_done" style="width: 18px; height: 18px;">
+                        Saya sudah mengunduh Backup Excel dan memahami data ini akan dihapus permanen.
+                    </label>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+let DB = { company: {}, pangkalan: [], supir: [], spbe: [], bank: [], kitir: [], penebusan: [] };
+let token = null, tempTujuanSJ = [], selectedPangkalanSJ = null, tempJadwalKitir = [];
+
+// ==========================================
+// NOTIFIKASI TOAST
+// ==========================================
+function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = isError ? '#c62828' : '#2e7d32';
+    t.style.display = 'block';
+    t.style.opacity = '1';
+    setTimeout(() => {
+        t.style.opacity = '0';
+        setTimeout(() => t.style.display = 'none', 300);
+    }, 3000);
+}
+
+// ==========================================
+// AUTHENTICATION
+// ==========================================
+function doLogin() {
+    const u = document.getElementById('loginUser').value, p = document.getElementById('loginPass').value;
+    google.script.run.withSuccessHandler(res => {
+        if(res.success) {
+            token = res.token;
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            loadData();
+        } else showToast(res.message, true);
+    }).checkLogin(u, p);
+}
+function doLogout() { google.script.run.logout(token); location.reload(); }
+
+// ==========================================
+// LOAD DATA & RENDER TABLES
+// ==========================================
+function loadData() {
+    google.script.run.withSuccessHandler(data => {
+        DB = data;
+        
+        // Render tabel master terlebih dahulu agar langsung muncul
+        renderTables(); 
+        fillCompanyForm();
+        
+        // Lalu populate dropdowns
+        try { populateDropdowns(); } catch(e) { console.error("Dropdown Error: ", e); }
+        
+        document.getElementById('headerCompanyName').textContent = DB.company.nama || 'PT. Nama Perusahaan';
+        document.getElementById('loginCompanyName').textContent = DB.company.nama || 'PT. Nama Perusahaan';
+        
+        onSJDateChange();
+    }).withFailureHandler(e => alert("Gagal memuat data: " + e.message)).getInitialData();
+}
+
+function renderTables() {
+    if (DB.spbe) {
+        document.getElementById('tabelMasterSPBE').innerHTML = DB.spbe.map(s => `<tr><td>${s.kode}</td><td>${s.nama}</td><td>${s.alamat}</td><td>Rp ${s.hargaBeli}</td><td><button class="btn btn-red btn-sm" onclick="hapusSPBE('${s.kode}')">Hapus</button></td></tr>`).join('');
+    }
+    if (DB.bank) {
+        document.getElementById('tabelMasterBank').innerHTML = DB.bank.map(b => `<tr><td>${b.nama}</td><td>${b.rekening}</td><td>${b.atasNama}</td><td><button class="btn btn-red btn-sm" onclick="hapusBank('${b.rekening}')">Hapus</button></td></tr>`).join('');
+    }
+    if (DB.pangkalan) {
+        document.getElementById('tabelMasterPangkalan').innerHTML = DB.pangkalan.map(p => `<tr><td>${p.kode}</td><td>${p.nama}</td><td>${p.alamat}</td><td>${p.kuota}</td><td>Rp ${p.harga}</td><td>${p.status}</td><td><button class="btn btn-red btn-sm" onclick="hapusPangkalan('${p.kode}')">Hapus</button></td></tr>`).join('');
+    }
+    if (DB.supir) {
+        document.getElementById('tabelMasterSupir').innerHTML = DB.supir.map(s => `<tr><td>${s.id}</td><td>${s.nama}</td><td>${s.armada}</td><td>${s.kernet}</td><td><button class="btn btn-red btn-sm" onclick="hapusSupir('${s.id}')">Hapus</button></td></tr>`).join('');
+    }
+}
+
+function populateDropdowns() {
+    let optSupir = '<option value="">-- Pilih --</option>';
+    (DB.supir || []).forEach(s => optSupir += `<option value="${s.nama} | ${s.armada}">${s.nama}</option>`);
+    document.getElementById('sj_supir').innerHTML = optSupir;
+
+    let optSpbe = '<option value="">-- Pilih --</option>';
+    (DB.spbe || []).forEach(s => optSpbe += `<option value="${s.kode}">${s.kode} - ${s.nama}</option>`);
+    document.getElementById('k_spbe').innerHTML = optSpbe;
+
+    let optBank = '<option value="">-- Pilih --</option>';
+    (DB.bank || []).forEach(b => optBank += `<option value="${b.rekening}">${b.nama} - ${b.rekening}</option>`);
+    document.getElementById('t_bank').innerHTML = optBank;
+
+    let optTebus = '<option value="">-- Pilih DO --</option>';
+    (DB.penebusan || []).forEach(t => optTebus += `<option value="${t.kodeTebus}">${t.kodeTebus} (Sisa: ${t.jumlahUnit})</option>`);
+    document.getElementById('sj_kodeTebus').innerHTML = optTebus;
+
+    let optKitir = '<option value="">-- Pilih Kitir --</option>';
+    (DB.kitir || []).forEach(k => optKitir += `<option value="${k.kodeKitir}">${k.kodeKitir} - SA:${k.nomorSA}</option>`);
+    document.getElementById('t_kitir').innerHTML = optKitir;
+}
+
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if(id === 'pageDaftarSJ') cariDaftarSJ();
+    if(id === 'pageDaftarPenebusan') renderDaftarPenebusan();
+}
+
+// ==========================================
+// MASTER DATA ACTION (SIMPAN & CLEAR FORM)
+// ==========================================
+function fillCompanyForm() {
+    const c = DB.company || {};
+    document.getElementById('pt_nama').value = c.nama || ''; document.getElementById('pt_alamat').value = c.alamat || '';
+    document.getElementById('pt_kota').value = c.kota || ''; document.getElementById('pt_telp').value = c.telp || '';
+    document.getElementById('pt_email').value = c.email || ''; document.getElementById('pt_npwp').value = c.npwp || '';
+    document.getElementById('pt_soldto').value = c.soldTo || '';
+}
+function simpanPerusahaan() {
+    const d = { nama: document.getElementById('pt_nama').value, alamat: document.getElementById('pt_alamat').value, kota: document.getElementById('pt_kota').value, telp: document.getElementById('pt_telp').value, email: document.getElementById('pt_email').value, npwp: document.getElementById('pt_npwp').value, soldTo: document.getElementById('pt_soldto').value };
+    google.script.run.withSuccessHandler(r => { showToast(r.message); loadData(); }).savePerusahaan(token, d);
+}
+function simpanSPBE() {
+    const d = { kode: document.getElementById('sp_kode').value, nama: document.getElementById('sp_nama').value, alamat: document.getElementById('sp_alamat').value, telp: document.getElementById('sp_telp').value, hargaBeli: document.getElementById('sp_harga').value, shipTo: document.getElementById('sp_ship').value };
+    google.script.run.withSuccessHandler(r => { 
+        showToast(r.message); 
+        ['sp_kode','sp_nama','sp_alamat','sp_telp','sp_harga','sp_ship'].forEach(id => document.getElementById(id).value = '');
+        loadData(); 
+    }).saveSPBE(token, d);
+}
+function hapusSPBE(k) { if(confirm('Hapus?')) google.script.run.withSuccessHandler(()=>{showToast('SPBE dihapus'); loadData();}).deleteSPBE(token, k); }
+
+function simpanBank() {
+    const d = { nama: document.getElementById('bk_nama').value, rekening: document.getElementById('bk_rek').value, atasNama: document.getElementById('bk_an').value, cabang: document.getElementById('bk_cabang').value };
+    google.script.run.withSuccessHandler(r => { 
+        showToast(r.message); 
+        ['bk_nama','bk_rek','bk_an','bk_cabang'].forEach(id => document.getElementById(id).value = '');
+        loadData(); 
+    }).saveBank(token, d);
+}
+function hapusBank(r) { if(confirm('Hapus?')) google.script.run.withSuccessHandler(()=>{showToast('Bank dihapus'); loadData();}).deleteBank(token, r); }
+
+function simpanPangkalan() {
+    const d = { kode: document.getElementById('mp_kode').value, nama: document.getElementById('mp_nama').value, alamat: document.getElementById('mp_alamat').value, kuota: document.getElementById('mp_kuota').value, harga: document.getElementById('mp_harga').value, status: document.getElementById('mp_status').value };
+    google.script.run.withSuccessHandler(r => { 
+        showToast(r.message); 
+        ['mp_kode','mp_nama','mp_alamat','mp_kuota','mp_harga'].forEach(id => document.getElementById(id).value = '');
+        loadData(); 
+    }).savePangkalan(token, d);
+}
+function hapusPangkalan(k) { if(confirm('Hapus?')) google.script.run.withSuccessHandler(()=>{showToast('Pangkalan dihapus'); loadData();}).deletePangkalan(token, k); }
+
+function simpanSupir() {
+    const d = { id: document.getElementById('ms_id').value, nama: document.getElementById('ms_nama').value, armada: document.getElementById('ms_armada').value, kernet: document.getElementById('ms_kernet').value };
+    google.script.run.withSuccessHandler(r => { 
+        showToast(r.message); 
+        ['ms_id','ms_nama','ms_armada','ms_kernet'].forEach(id => document.getElementById(id).value = '');
+        loadData(); 
+    }).saveSupir(token, d);
+}
+function hapusSupir(id) { if(confirm('Hapus?')) google.script.run.withSuccessHandler(()=>{showToast('Pengemudi dihapus'); loadData();}).deleteSupir(token, id); }
+
+// ==========================================
+// OPERASIONAL ACTION
+// ==========================================
+function onSJDateChange() {
+    const tgl = document.getElementById('sj_tanggal').value;
+    if(!tgl) return;
+    google.script.run.withSuccessHandler(noSJ => document.getElementById('sj_noSJ').value = noSJ).generateNoSJ(tgl);
+}
+function onSJTebusChange() {
+    const t = (DB.penebusan || []).find(x => x.kodeTebus === document.getElementById('sj_kodeTebus').value);
+    if(t) { document.getElementById('sj_noSA').value = t.nomorSA; document.getElementById('sj_spbe').value = t.spbe; }
+}
+function suggestPangkalan() {
+    const q = document.getElementById('sj_cariPangkalan').value.toLowerCase(), box = document.getElementById('suggestPangkalanBox');
+    if(!q) { box.style.display = 'none'; return; }
+    const res = (DB.pangkalan || []).filter(p => p.status === 'AKTIF' && p.nama.toLowerCase().includes(q)).slice(0, 5);
+    box.innerHTML = res.map(p => `<div onclick="pickPangkalan('${p.kode}')"><b>${p.nama}</b> (${p.kode})</div>`).join('');
+    box.style.display = res.length ? 'block' : 'none';
+}
+function pickPangkalan(kode) {
+    selectedPangkalanSJ = (DB.pangkalan || []).find(p => p.kode === kode);
+    document.getElementById('sj_cariPangkalan').value = selectedPangkalanSJ.nama;
+    document.getElementById('suggestPangkalanBox').style.display = 'none';
+}
+function tambahTujuanSJ() {
+    if(!selectedPangkalanSJ) return alert('Pilih pangkalan!');
+    const jml = Number(document.getElementById('sj_jmlTabung').value);
+    tempTujuanSJ.push({ kode: selectedPangkalanSJ.kode, pangkalan: selectedPangkalanSJ.nama, alamat: selectedPangkalanSJ.alamat, jumlah: jml, harga: selectedPangkalanSJ.harga });
+    selectedPangkalanSJ = null; document.getElementById('sj_cariPangkalan').value = ''; renderTabelSJ();
+}
+function renderTabelSJ() {
+    let h = '', q = 0, b = 0;
+    tempTujuanSJ.forEach((t, i) => { q+=t.jumlah; b+=(t.jumlah*t.harga); h += `<tr><td>${i+1}</td><td>${t.pangkalan}</td><td>${t.alamat}</td><td>${t.jumlah}</td><td>Rp ${(t.jumlah*t.harga).toLocaleString('id-ID')}</td><td><button class="btn btn-red btn-sm" onclick="tempTujuanSJ.splice(${i},1);renderTabelSJ()">Hapus</button></td></tr>`; });
+    document.getElementById('tabelTujuanSJ').innerHTML = h;
+    document.getElementById('totalTabungSJ').textContent = q; document.getElementById('totalBayarSJ').textContent = 'Rp ' + b.toLocaleString('id-ID');
+}
+function simpanSJ() {
+    const payload = { tanggal: document.getElementById('sj_tanggal').value, noSJ: document.getElementById('sj_noSJ').value, kodeTebus: document.getElementById('sj_kodeTebus').value, noSA: document.getElementById('sj_noSA').value, spbe: document.getElementById('sj_spbe').value, supir: document.getElementById('sj_supir').value, tujuan: tempTujuanSJ };
+    if(!payload.noSJ || !payload.spbe || !payload.supir || payload.tujuan.length === 0) return alert('Lengkapi form!');
+    google.script.run.withSuccessHandler(r => { showToast(r.message); if(r.status==='success'){ tempTujuanSJ=[]; renderTabelSJ(); loadData(); } }).prosesSuratJalan(payload);
+}
+function cariDaftarSJ() {
+    google.script.run.withSuccessHandler(rows => {
+        document.getElementById('tabelDaftarSJ').innerHTML = rows.map(r => `<tr><td>${r.tanggal}</td><td>${r.noSJ}</td><td>${r.spbe}</td><td>${r.supir}</td><td>${r.totalRefill}</td><td>${r.status}</td><td><button class="btn btn-red btn-sm" onclick="batalSJ('${r.noSJ}')">Batal</button></td></tr>`).join('');
+    }).getDaftarSJ(document.getElementById('dsj_tgl1').value, document.getElementById('dsj_tgl2').value);
+}
+function batalSJ(noSJ) { if(confirm('Batalkan SJ ini?')) google.script.run.withSuccessHandler(()=>{showToast('SJ Dibatalkan'); cariDaftarSJ();}).batalkanSJ(token, noSJ); }
+
+function generateKodeKitir() {
+    const now = new Date(), key = String(now.getFullYear()).slice(-2) + String(now.getMonth()+1).padStart(2,'0');
+    document.getElementById('k_kode').value = `KT${key}.${String(((DB.counter||{})[key] || 0) + 1).padStart(2,'0')}`;
+}
+function tambahJadwalKitir() {
+    const tgl = document.getElementById('k_tgl').value, jml = Number(document.getElementById('k_jml').value);
+    if(!tgl || !jml) return alert('Isi form!');
+    const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date(tgl).getDay()];
+    tempJadwalKitir.push({ tanggal: tgl, hari: hari, jumlah: jml }); renderTabelKitir();
+}
+function renderTabelKitir() {
+    let h = '', t = 0;
+    tempJadwalKitir.forEach((j, i) => { t+=j.jumlah; h += `<tr><td>${i+1}</td><td>${j.tanggal}</td><td>${j.hari}</td><td>${j.jumlah}</td><td><button class="btn btn-red btn-sm" onclick="tempJadwalKitir.splice(${i},1);renderTabelKitir()">Hapus</button></td></tr>`; });
+    document.getElementById('tabelJadwalKitir').innerHTML = h; document.getElementById('totalKitir').textContent = t;
+}
+function simpanKitir() {
+    const payload = { kodeKitir: document.getElementById('k_kode').value, nomorSA: document.getElementById('k_sa').value, spbe: document.getElementById('k_spbe').value, jenisSA: document.getElementById('k_jenis').value, soldTo: DB.company.soldTo, shipTo: '', jadwal: tempJadwalKitir };
+    google.script.run.withSuccessHandler(r => { showToast(r.message); if(r.success){ tempJadwalKitir=[]; renderTabelKitir(); loadData(); } }).saveKitir(token, payload);
+}
+function cariKitirBulanan() {
+    const bln = parseInt(document.getElementById('kb_bulan').value), thn = parseInt(document.getElementById('kb_tahun').value);
+    const days = new Date(thn, bln, 0).getDate();
+    let h = '<tr><th>Kode Kitir</th><th>SA</th>'; for(let d=1; d<=days; d++) h += `<th>${d}</th>`; h += '<th>Total</th></tr>';
+    document.getElementById('headKitirBulanan').innerHTML = h;
+    
+    let html = '';
+    (DB.kitir || []).forEach(k => {
+        const jadwalBulanIni = k.jadwal.filter(j => new Date(j.tanggal).getMonth()+1 === bln && new Date(j.tanggal).getFullYear() === thn);
+        if(jadwalBulanIni.length === 0) return;
+        let t = 0, r = `<tr><td><b>${k.kodeKitir}</b></td><td>${k.nomorSA}</td>`;
+        for(let d=1; d<=days; d++) {
+            const ds = `${thn}-${String(bln).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const j = jadwalBulanIni.find(x => x.tanggal === ds);
+            if(j) { r += `<td style="font-weight:bold;background:#dbeafe;">${j.jumlah}</td>`; t+=j.jumlah; } else r += `<td style="color:#ccc;">-</td>`;
+        }
+        r += `<td><b>${t}</b></td></tr>`; html += r;
+    });
+    document.getElementById('bodyKitirBulanan').innerHTML = html;
+}
+
+function onKitirTebusChange() {
+    const k = (DB.kitir || []).find(x => x.kodeKitir === document.getElementById('t_kitir').value);
+    if(k) { document.getElementById('t_sa').value = k.nomorSA; document.getElementById('t_spbe').value = k.spbe; }
+}
+function hitungTebus() {
+    document.getElementById('t_setor').value = (Number(document.getElementById('t_unit').value) || 0) * (Number(document.getElementById('t_harga').value) || 0);
+}
+function simpanPenebusan() {
+    const payload = { tanggal: document.getElementById('t_tgl').value, kodeKitir: document.getElementById('t_kitir').value, noSA: document.getElementById('t_sa').value, spbe: document.getElementById('t_spbe').value, noBuktiBank: document.getElementById('t_nobukti').value, rekeningBank: document.getElementById('t_bank').value, doFrom: document.getElementById('t_from').value, doTo: document.getElementById('t_to').value, jumlahUnit: Number(document.getElementById('t_unit').value), hargaBeli: Number(document.getElementById('t_harga').value), jumlahSetor: Number(document.getElementById('t_setor').value) };
+    google.script.run.withSuccessHandler(r => { showToast(r.message); if(r.success) loadData(); }).savePenebusan(token, payload);
+}
+function renderDaftarPenebusan() {
+    document.getElementById('tabelDaftarPenebusan').innerHTML = (DB.penebusan || []).map(p => `<tr><td>${p.kodeTebus}</td><td>${p.tanggal}</td><td>${p.nomorSA}</td><td>${p.spbe}</td><td>${p.jumlahUnit}</td><td>Rp ${(p.jumlahSetor||0).toLocaleString('id-ID')}</td><td><button class="btn btn-red btn-sm" onclick="hapusPenebusan('${p.kodeTebus}')">Hapus</button></td></tr>`).join('');
+}
+function hapusPenebusan(k) { if(confirm('Hapus Penebusan?')) google.script.run.withSuccessHandler(()=>{showToast('Penebusan dihapus'); loadData();}).deletePenebusan(token, k); }
+
+function cariDistribusi() {
+    google.script.run.withSuccessHandler(rows => {
+        document.getElementById('tabelDistribusi').innerHTML = rows.map((r,i) => `<tr><td>${i+1}</td><td>${r.noSJ}</td><td>${r.tanggal}</td><td>${r.kodeTebus}</td><td>${r.pengemudi}</td><td>${r.jmlPkl}</td><td>${r.jmlKirim}</td><td>Rp ${r.jmlNominal.toLocaleString('id-ID')}</td></tr>`).join('');
+    }).getDistribusiPenebusan(document.getElementById('dist_tgl1').value, document.getElementById('dist_tgl2').value);
+}
+function cariMatriksPengiriman() {
+    google.script.run.withSuccessHandler(res => {
+        let h = '<tr><th>No</th><th>Pangkalan</th>'; res.dates.forEach(d => h += `<th>${d.split('-')[2]}</th>`); h += '<th>Total</th></tr>';
+        document.getElementById('headMatriks').innerHTML = h;
+        document.getElementById('bodyMatriks').innerHTML = res.data.map(r => {
+            let row = `<tr><td>${r.no}</td><td>${r.nama}</td>`;
+            r.harian.forEach(v => row += `<td style="${v>0?'font-weight:bold;background:#dbeafe;':'color:#ccc;'}">${v||'-'}</td>`);
+            return row + `<td><b>${r.total}</b></td></tr>`;
+        }).join('');
+    }).getDaftarPengirimanMatriks(document.getElementById('dp_tgl1').value, document.getElementById('dp_tgl2').value);
+}
+
+// ==========================================
+// BACKUP DATA ACTION
+// ==========================================
+function prosesBackup(type) {
+    const tglMulai = document.getElementById('backup_tgl_mulai').value;
+    const tglSelesai = document.getElementById('backup_tgl_selesai').value;
+    if (!tglMulai || !tglSelesai) return showToast('Pilih rentang tanggal!', true);
+
+    const statusBox = document.getElementById('backupStatus');
+    statusBox.style.display = 'block';
+    statusBox.innerHTML = 'Memproses file ' + type.toUpperCase() + '...';
+
+    const successHandler = res => {
+        statusBox.style.display = 'none';
+        if(res && res.downloadUrl) {
+            const link = document.createElement('a');
+            link.href = res.downloadUrl;
+            link.click();
+            document.getElementById('backupSuccessMsg').innerHTML = `
+                <div style="margin-bottom:20px; padding:16px; background:#d1fae5; border:2px solid #10b981; color:#065f46; border-radius:8px; text-align:center;">
+                    ✅ <b>File Backup Berhasil Dibuat!</b> Cek folder Downloads Anda.
+                </div>
+            `;
+        }
+    };
+
+    if(type === 'excel') {
+        google.script.run.withSuccessHandler(successHandler).withFailureHandler(e => { statusBox.style.display = 'none'; showToast(e.message, true); }).exportBackupExcel(tglMulai, tglSelesai);
+    } else {
+        google.script.run.withSuccessHandler(successHandler).withFailureHandler(e => { statusBox.style.display = 'none'; showToast(e.message, true); }).exportBackupPDF(tglMulai, tglSelesai);
+    }
+}
+
+function konfirmasiHapusData(btn) {
+    const batasTanggal = document.getElementById('hapus_tgl_batas').value;
+    const isChecked = document.getElementById('cb_backup_done').checked;
+
+    if (!batasTanggal) return showToast('Pilih tanggal batas hapus!', true);
+    if (!isChecked) return showToast('Centang konfirmasi backup terlebih dahulu!', true);
+
+    if (!confirm(`PERINGATAN KERAS!\n\nAnda akan menghapus SEMUA data transaksi SEBELUM tanggal ${batasTanggal}.\n\nData yang dihapus TIDAK BISA dikembalikan. Lanjutkan?`)) return;
+
+    btn.disabled = true; btn.innerHTML = 'Memproses...';
+
+    google.script.run.withSuccessHandler(res => {
+        showToast(res.message);
+        btn.disabled = false; btn.innerHTML = '🗑 Hapus Data Lama';
+        document.getElementById('hapus_tgl_batas').value = '';
+        document.getElementById('cb_backup_done').checked = false;
+        loadData();
+    }).withFailureHandler(e => { showToast(e.message, true); btn.disabled = false; btn.innerHTML = '🗑 Hapus Data Lama'; })
+    .hapusDataTransaksiLama(batasTanggal);
+}
+
+// ==========================================
+// INIT DATE
+// ==========================================
+const today = new Date().toISOString().split('T')[0];
+['sj_tanggal', 'k_tgl', 't_tgl', 'dist_tgl1', 'dist_tgl2', 'dsj_tgl1', 'dsj_tgl2', 'dp_tgl1', 'dp_tgl2', 'bak_tgl1', 'bak_tgl2', 'backup_tgl_mulai', 'backup_tgl_selesai'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = today; });
+document.getElementById('kb_bulan').value = new Date().getMonth() + 1;
+document.getElementById('kb_tahun').value = new Date().getFullYear();
+</script>
+</body>
+</html>
